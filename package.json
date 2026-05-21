@@ -13,6 +13,7 @@
 	"dependencies": {
 		"@iconify/react": "^6.0.2",
 		"@radix-ui/react-slot": "^1.2.4",
+		"@slack/web-api": "^7.15.2",
 		"@tabler/icons-react": "^3.40.0",
 		"@tanstack/react-table": "^8.21.3",
 		"class-variance-authority": "^0.7.1",
