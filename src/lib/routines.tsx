@@ -3,14 +3,14 @@ import type { ReactNode } from 'react'
 
 import { User } from '@/types/user'
 
-type Team = {
+type Routine = {
 	icon: ReactNode
 	name: string
 	routineId: number
 	users: User[]
 }
 
-export const TEAMS: Record<string, Team> = {
+export const ROUTINES: Record<string, Routine> = {
 	'page-management': {
 		icon: <IconFile />,
 		name: 'Page Management',

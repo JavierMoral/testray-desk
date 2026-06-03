@@ -5,7 +5,7 @@ import path from 'node:path'
 
 import { SLACK_BOT_TOKEN, SLACK_CHANNEL } from '@/lib/env'
 import { getRoutineResults } from '@/lib/get-routine-results'
-import { TEAMS } from '@/lib/teams'
+import { ROUTINES } from '@/lib/routines'
 
 import { TestResult } from '@/types/test-result'
 import { Build, Routine } from '@/types/testray'
@@ -154,10 +154,10 @@ function writeLastProcessedSummaryBuildId(id: Build['id']): void {
 }
 
 async function main() {
-	const team = TEAMS['page-management']
+	const routine = ROUTINES['page-management']
 
 	const [latestBuild] = await getRoutineBuilds({
-		routineId: team.routineId,
+		routineId: routine.routineId,
 		limit: 1,
 	})
 
@@ -169,7 +169,7 @@ async function main() {
 		return
 	}
 
-	const { results, build } = await getRoutineResults(team.routineId)
+	const { results, build } = await getRoutineResults(routine.routineId)
 
 	const failures = results.filter((result) => result.status === 'FAILED')
 	const blocked = results.filter((result) => result.status === 'BLOCKED')
@@ -177,9 +177,9 @@ async function main() {
 	const newFailures = failures.filter((result) => result.isNew)
 	const existingFailures = failures.filter((result) => !result.isNew)
 
-	const usersById = new Map(team.users.map((user) => [user.id, user.name]))
+	const usersById = new Map(routine.users.map((user) => [user.id, user.name]))
 
-	const routineUrl = buildRoutineLink(team.routineId)
+	const routineUrl = buildRoutineLink(routine.routineId)
 
 	let countsText = `:x: ${newFailures.length} new / ${failures.length} total failures`
 
@@ -229,7 +229,7 @@ async function main() {
 				'New Failures',
 				newFailures,
 				usersById,
-				team.routineId,
+				routine.routineId,
 				build.id
 			),
 		})
@@ -244,7 +244,7 @@ async function main() {
 				'Existing Failures',
 				existingFailures,
 				usersById,
-				team.routineId,
+				routine.routineId,
 				build.id
 			),
 		})

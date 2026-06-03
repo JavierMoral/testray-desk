@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 
 import { SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar'
 
-export function NavTeam({
+export function NavRoutine({
 	id,
 	icon,
 	name,
@@ -16,12 +16,12 @@ export function NavTeam({
 }) {
 	const pathname = usePathname()
 
-	const isActive = pathname === `/teams/${id}`
+	const isActive = pathname === `/routines/${id}`
 
 	return (
 		<SidebarMenuItem>
 			<SidebarMenuButton asChild isActive={isActive}>
-				<Link href={`/teams/${id}`}>
+				<Link href={`/routines/${id}`}>
 					{icon}
 
 					{name}

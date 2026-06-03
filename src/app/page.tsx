@@ -6,7 +6,7 @@ export default function Page() {
 					Welcome!
 				</p>
 				<p className="mt-4 text-xl text-muted-foreground md:text-2xl">
-					Select a team from the sidebar to get started.
+					Select a routine from the sidebar to get started.
 				</p>
 			</div>
 		</div>

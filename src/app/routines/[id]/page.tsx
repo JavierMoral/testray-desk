@@ -11,20 +11,20 @@ import { TestTable } from '@/components/test-table/test-table'
 
 import { useRoutineResults } from '@/hooks/use-routine-results'
 
-import { TEAMS } from '@/lib/teams'
+import { ROUTINES } from '@/lib/routines'
 
 import { TestResult } from '@/types/test-result'
 
 export default function Page() {
 	const params = useParams<{ id: string }>()
 
-	const team = TEAMS[params.id]
+	const routine = ROUTINES[params.id]
 
-	const routineId = team?.routineId ?? null
+	const routineId = routine?.routineId ?? null
 
 	const { loading, build, error, results } = useRoutineResults(routineId)
 
-	if (!team || error) {
+	if (!routine || error) {
 		return <Error message={error} />
 	}
 
@@ -38,8 +38,8 @@ export default function Page() {
 
 			<TestTable
 				results={results}
-				users={team.users}
-				routineId={team.routineId}
+				users={routine.users}
+				routineId={routine.routineId}
 				build={build}
 			/>
 		</div>

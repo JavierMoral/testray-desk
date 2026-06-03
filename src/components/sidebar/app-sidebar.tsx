@@ -16,10 +16,10 @@ import {
 	SidebarRail,
 } from '@/components/ui/sidebar'
 
-import { TEAMS } from '@/lib/teams'
+import { ROUTINES } from '@/lib/routines'
 
 import { AppLogo } from '../app-logo'
-import { NavTeam } from './nav-team'
+import { NavRoutine } from './nav-routine'
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 	return (
@@ -40,12 +40,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 			</SidebarHeader>
 			<SidebarContent>
 				<SidebarGroup>
-					<SidebarGroupLabel>Teams</SidebarGroupLabel>
+					<SidebarGroupLabel>Routines</SidebarGroupLabel>
 
 					<SidebarGroupContent>
 						<SidebarMenu>
-							{Object.entries(TEAMS).map(([id, data]) => (
-								<NavTeam
+							{Object.entries(ROUTINES).map(([id, data]) => (
+								<NavRoutine
 									key={id}
 									id={id}
 									icon={data.icon}

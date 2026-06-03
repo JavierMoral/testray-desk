@@ -4,7 +4,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 
 import { inheritMetadata } from '@/lib/inherit-metadata'
-import { TEAMS } from '@/lib/teams'
+import { ROUTINES } from '@/lib/routines'
 
 import { Build, Routine } from '@/types/testray'
 
@@ -67,7 +67,9 @@ async function updateCaseResults(routineId: Routine['id']) {
 
 async function main() {
 	await Promise.all(
-		Object.values(TEAMS).map((team) => updateCaseResults(team.routineId))
+		Object.values(ROUTINES).map((routine) =>
+			updateCaseResults(routine.routineId)
+		)
 	)
 }
 
