@@ -1,4 +1,4 @@
-import { IconFile } from '@tabler/icons-react'
+import { IconFile, IconFolders, IconLayoutBoard } from '@tabler/icons-react'
 import type { ReactNode } from 'react'
 
 import { User } from '@/types/user'
@@ -24,6 +24,28 @@ export const TEAMS: Record<string, Team> = {
 			{ id: 44233335, name: 'Javi' },
 			{ id: 33780064, name: 'Lourdes' },
 			{ id: 5383891, name: 'Sandro' },
+		],
+	},
+	'cms': {
+		icon: <IconLayoutBoard />,
+		name: 'CMS',
+		routineId: 336020509,
+		users: [
+			{ id: 5125486, name: 'Jürgen' },
+			{ id: 5677028, name: 'Mikel' },
+			{ id: 243081656, name: 'Roseline' },
+			{ id: 9459540, name: 'Vero' },
+		],
+	},
+	'content-management': {
+		icon: <IconFolders />,
+		name: 'Content Management',
+		routineId: 1021677,
+		users: [
+			{ id: 5125486, name: 'Jürgen' },
+			{ id: 5677028, name: 'Mikel' },
+			{ id: 243081656, name: 'Roseline' },
+			{ id: 9459540, name: 'Vero' },
 		],
 	},
 }
