@@ -9,6 +9,7 @@ import { Build, Case, CaseResult, Routine } from '@/types/testray'
 
 import { getTestResult } from './get-test-result'
 import { inheritMetadata } from './inherit-metadata'
+import { markInherited, wasInherited } from './inherited-builds'
 import { hasHistory } from './test-history'
 import { getTypeWeight } from './test-type'
 
@@ -57,6 +58,8 @@ export async function getRoutineResults(routineId: Routine['id']): Promise<{
 
 	const casesMap = new Map(cases.map((caseItem) => [caseItem.id, caseItem]))
 
+	const inherited = await wasInherited(routineId, lastBuild.id)
+
 	const results = []
 
 	for (let caseResult of caseResults) {
@@ -68,7 +71,9 @@ export async function getRoutineResults(routineId: Routine['id']): Promise<{
 			continue
 		}
 
-		caseResult = await inheritMetadata(previousDayIssues, caseResult)
+		if (!inherited) {
+			caseResult = await inheritMetadata(previousDayIssues, caseResult)
+		}
 
 		const history = histories.get(testCase.id) ?? null
 
@@ -83,6 +88,10 @@ export async function getRoutineResults(routineId: Routine['id']): Promise<{
 		})
 
 		results.push(result)
+	}
+
+	if (!inherited) {
+		await markInherited(routineId, lastBuild.id)
 	}
 
 	sortResults(results)
