@@ -20,13 +20,16 @@ import { getStatusIcon, getStatusLabel } from '@/lib/test-status'
 import { getTypeIcon, getTypeLabel } from '@/lib/test-type'
 
 import { TestResult } from '@/types/test-result'
+import { User } from '@/types/user'
 
 export function Filters({
 	results,
+	users,
 	columnFilters,
 	setColumnFilters,
 }: {
 	results: TestResult[]
+	users: User[]
 	columnFilters: ColumnFiltersState
 	setColumnFilters: Dispatch<SetStateAction<ColumnFiltersState>>
 }) {
@@ -76,16 +79,49 @@ export function Filters({
 		}))
 	}, [results])
 
+	const assigneeOptions = useMemo(() => {
+		const counts: Record<string, number> = {}
+
+		for (const result of results) {
+			const key =
+				result.userId && result.userId !== 0
+					? String(result.userId)
+					: 'unassigned'
+
+			counts[key] = (counts[key] ?? 0) + 1
+		}
+
+		const options = users
+			.filter((user) => counts[String(user.id)])
+			.map((user) => ({
+				label: user.name,
+				value: String(user.id),
+				count: counts[String(user.id)],
+			}))
+
+		if (counts.unassigned) {
+			options.push({
+				label: 'Unassigned',
+				value: 'unassigned',
+				count: counts.unassigned,
+			})
+		}
+
+		return options
+	}, [results, users])
+
 	const nameFilter = getStringFilterValue(columnFilters, 'name')
 	const typeFilter = getArrayFilterValue(columnFilters, 'type')
 	const statusFilter = getArrayFilterValue(columnFilters, 'status')
 	const newFilter = getArrayFilterValue(columnFilters, 'new')
+	const assigneeFilter = getArrayFilterValue(columnFilters, 'assignee')
 
 	const hasActiveFilters =
 		nameFilter.length > 0 ||
 		typeFilter.length > 0 ||
 		statusFilter.length > 0 ||
-		newFilter.length > 0
+		newFilter.length > 0 ||
+		assigneeFilter.length > 0
 
 	return (
 		<div className="flex flex-1 items-center gap-2">
@@ -126,6 +162,15 @@ export function Filters({
 				selectedValues={newFilter}
 				onChange={(value) => {
 					setArrayFilterValue(setColumnFilters, 'new', value)
+				}}
+			/>
+
+			<MultiSelectFilter
+				label="Assignee"
+				options={assigneeOptions}
+				selectedValues={assigneeFilter}
+				onChange={(value) => {
+					setArrayFilterValue(setColumnFilters, 'assignee', value)
 				}}
 			/>
 

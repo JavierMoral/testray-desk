@@ -154,6 +154,18 @@ export function TestTable({
 			{
 				accessorKey: 'assignee',
 				header: 'Assignee',
+				filterFn: (row, _id, value: string[]) => {
+					if (!value?.length) {
+						return true
+					}
+
+					const userId = row.original.userId
+
+					const key =
+						userId && userId !== 0 ? String(userId) : 'unassigned'
+
+					return value.includes(key)
+				},
 				cell: ({ row }) => (
 					<AssigneeSelect
 						testResult={row.original}
@@ -202,6 +214,7 @@ export function TestTable({
 			<div className="flex items-center justify-between gap-2">
 				<Filters
 					results={results}
+					users={users}
 					columnFilters={columnFilters}
 					setColumnFilters={setColumnFilters}
 				/>
