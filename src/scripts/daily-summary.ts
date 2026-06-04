@@ -3,7 +3,11 @@ import { KnownBlock, WebClient } from '@slack/web-api'
 import fs from 'node:fs'
 import path from 'node:path'
 
-import { SLACK_BOT_TOKEN, SLACK_CHANNEL } from '@/lib/env'
+import {
+	SLACK_BOT_TOKEN,
+	SLACK_CHANNEL_CMS,
+	SLACK_CHANNEL_PAGE_MANAGEMENT,
+} from '@/lib/env'
 import { getRoutineResults } from '@/lib/get-routine-results'
 import { ROUTINES } from '@/lib/routines'
 
@@ -11,12 +15,16 @@ import { TestResult } from '@/types/test-result'
 import { Build, Routine } from '@/types/testray'
 import { User } from '@/types/user'
 
-if (!SLACK_BOT_TOKEN || !SLACK_CHANNEL) {
-	throw new Error('SLACK_BOT_TOKEN and SLACK_CHANNEL are required')
+if (!SLACK_BOT_TOKEN) {
+	throw new Error('SLACK_BOT_TOKEN is required')
 }
 
 const slack = new WebClient(SLACK_BOT_TOKEN)
-const channel = SLACK_CHANNEL
+
+const SLACK_CHANNELS: Record<string, string | undefined> = {
+	'page-management': SLACK_CHANNEL_PAGE_MANAGEMENT,
+	'cms': SLACK_CHANNEL_CMS,
+}
 
 const EMOJI_PLAYWRIGHT = ':playwright:'
 const EMOJI_JAVA = ':java:'
@@ -25,10 +33,14 @@ const TESTRAY_DESK_URL = 'https://testray-desk.liferay.org.es'
 
 const MAX_COMMENT_LENGTH = 200
 
-const LAST_PROCESSED_SUMMARY_BUILD_ID_FILE = path.join(
-	process.cwd(),
-	'.last-processed-summary-build-id'
-)
+const ROUTINE_KEYS = ['page-management', 'cms']
+
+function getLastProcessedSummaryBuildIdFile(routineKey: string): string {
+	return path.join(
+		process.cwd(),
+		`.last-processed-summary-build-id-${routineKey}`
+	)
+}
 
 function buildFailureBlock(
 	result: TestResult,
@@ -136,12 +148,18 @@ function buildCaseResultLink(
 	return `https://testray.liferay.com/#/project/35392/routines/${routineId}/build/${buildId}/case-result/${caseResultId}`
 }
 
-function readLastProcessedSummaryBuildId(): Build['id'] | null {
+function readLastProcessedSummaryBuildId(
+	routineKey: string
+): Build['id'] | null {
 	try {
-		const content = fs
-			.readFileSync(LAST_PROCESSED_SUMMARY_BUILD_ID_FILE, 'utf-8')
-			.trim()
-		const id = Number(content)
+		const id = Number(
+			fs
+				.readFileSync(
+					getLastProcessedSummaryBuildIdFile(routineKey),
+					'utf-8'
+				)
+				.trim()
+		)
 
 		return Number.isFinite(id) ? id : null
 	} catch {
@@ -149,12 +167,22 @@ function readLastProcessedSummaryBuildId(): Build['id'] | null {
 	}
 }
 
-function writeLastProcessedSummaryBuildId(id: Build['id']): void {
-	fs.writeFileSync(LAST_PROCESSED_SUMMARY_BUILD_ID_FILE, String(id))
+function writeLastProcessedSummaryBuildId(
+	routineKey: string,
+	id: Build['id']
+): void {
+	fs.writeFileSync(getLastProcessedSummaryBuildIdFile(routineKey), String(id))
 }
 
-async function main() {
-	const routine = ROUTINES['page-management']
+async function processRoutine(routineKey: string): Promise<void> {
+	const routine = ROUTINES[routineKey]
+	const channel = SLACK_CHANNELS[routineKey]
+
+	if (!channel) {
+		throw new Error(
+			`No Slack channel configured for routine "${routineKey}"`
+		)
+	}
 
 	const [latestBuild] = await getRoutineBuilds({
 		routineId: routine.routineId,
@@ -165,7 +193,7 @@ async function main() {
 		return
 	}
 
-	if (readLastProcessedSummaryBuildId() === latestBuild.id) {
+	if (readLastProcessedSummaryBuildId(routineKey) === latestBuild.id) {
 		return
 	}
 
@@ -191,15 +219,17 @@ async function main() {
 		countsText += ` | :grey_question: ${untested.length} untested`
 	}
 
+	const headerText = `:bar_chart: Test Routine Results — ${routine.name}`
+
 	const parent = await slack.chat.postMessage({
 		channel,
-		text: `Test Routine Results — ${countsText}`,
+		text: `${headerText} — ${countsText}`,
 		blocks: [
 			{
 				type: 'header',
 				text: {
 					type: 'plain_text',
-					text: ':bar_chart: Test Routine Results',
+					text: headerText,
 					emoji: true,
 				},
 			},
@@ -250,7 +280,13 @@ async function main() {
 		})
 	}
 
-	writeLastProcessedSummaryBuildId(latestBuild.id)
+	writeLastProcessedSummaryBuildId(routineKey, latestBuild.id)
+}
+
+async function main() {
+	for (const routineKey of ROUTINE_KEYS) {
+		await processRoutine(routineKey)
+	}
 }
 
 main().catch((err) => {

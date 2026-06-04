@@ -6,19 +6,19 @@ import path from 'node:path'
 import { inheritMetadata } from '@/lib/inherit-metadata'
 import { ROUTINES } from '@/lib/routines'
 
-import { Build, Routine } from '@/types/testray'
+import { Build } from '@/types/testray'
 
-const LAST_REPORTED_BUILD_ID_FILE = path.join(
-	process.cwd(),
-	'.last-reported-build-id'
-)
+function getLastReportedBuildIdFile(routineKey: string): string {
+	return path.join(process.cwd(), `.last-reported-build-id-${routineKey}`)
+}
 
-function readLastReportedBuildId(): Build['id'] | null {
+function readLastReportedBuildId(routineKey: string): Build['id'] | null {
 	try {
-		const content = fs
-			.readFileSync(LAST_REPORTED_BUILD_ID_FILE, 'utf-8')
-			.trim()
-		const id = Number(content)
+		const id = Number(
+			fs
+				.readFileSync(getLastReportedBuildIdFile(routineKey), 'utf-8')
+				.trim()
+		)
 
 		return Number.isFinite(id) ? id : null
 	} catch {
@@ -26,13 +26,15 @@ function readLastReportedBuildId(): Build['id'] | null {
 	}
 }
 
-function writeLastReportedBuildId(id: Build['id']): void {
-	fs.writeFileSync(LAST_REPORTED_BUILD_ID_FILE, String(id))
+function writeLastReportedBuildId(routineKey: string, id: Build['id']): void {
+	fs.writeFileSync(getLastReportedBuildIdFile(routineKey), String(id))
 }
 
-async function updateCaseResults(routineId: Routine['id']) {
+async function updateCaseResults(routineKey: string) {
+	const routine = ROUTINES[routineKey]
+
 	const [lastBuild, previousDayBuild] = await getRoutineBuilds({
-		routineId,
+		routineId: routine.routineId,
 		limit: 2,
 	})
 
@@ -42,7 +44,7 @@ async function updateCaseResults(routineId: Routine['id']) {
 		return
 	}
 
-	if (readLastReportedBuildId() === lastBuild.id) {
+	if (readLastReportedBuildId(routineKey) === lastBuild.id) {
 		process.stdout.write('false')
 
 		return
@@ -62,14 +64,12 @@ async function updateCaseResults(routineId: Routine['id']) {
 		await inheritMetadata(previousDayIssues, caseResult)
 	}
 
-	writeLastReportedBuildId(lastBuild.id)
+	writeLastReportedBuildId(routineKey, lastBuild.id)
 }
 
 async function main() {
 	await Promise.all(
-		Object.values(ROUTINES).map((routine) =>
-			updateCaseResults(routine.routineId)
-		)
+		Object.keys(ROUTINES).map((routineKey) => updateCaseResults(routineKey))
 	)
 }
 
