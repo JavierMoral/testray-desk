@@ -17,7 +17,7 @@ export const ROUTINES: Record<string, Routine> = {
 		routineId: 985092,
 		users: [
 			{ id: 5175336, name: 'Víctor' },
-			{ id: 9459540, name: 'Balázs' },
+			{ id: 10893546, name: 'Balázs' },
 			{ id: 12929091, name: 'Georgel' },
 			{ id: 10981196, name: 'Chaparro' },
 			{ id: 9607391, name: 'Rubén' },
