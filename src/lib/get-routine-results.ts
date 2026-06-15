@@ -71,6 +71,13 @@ export async function getRoutineResults(routineId: Routine['id']): Promise<{
 			continue
 		}
 
+		if (
+			testCase.name.startsWith('playwright-js-tomcat101-postgresql') ||
+			testCase.name.startsWith('modules-integration-postgresql')
+		) {
+			continue
+		}
+
 		if (!inherited) {
 			caseResult = await inheritMetadata(previousDayIssues, caseResult)
 		}
