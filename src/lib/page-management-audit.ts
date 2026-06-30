@@ -154,10 +154,12 @@ export async function snapshot(
 		await fs.mkdir(SNAPSHOT_DIR, { recursive: true })
 
 		const metadata = caseResults
+			// Only rows carrying real metadata that could be lost: a non-empty
+			// comment or a real assignee. Testray uses userId 0 for "unassigned",
+			// so a truthy check (not `!== undefined`) excludes that noise.
 			.filter(
 				(caseResult) =>
-					caseResult.comment ||
-					caseResult.r_userToCaseResults_userId !== undefined
+					caseResult.comment || caseResult.r_userToCaseResults_userId
 			)
 			.map((caseResult) => ({
 				caseResultId: caseResult.id,
