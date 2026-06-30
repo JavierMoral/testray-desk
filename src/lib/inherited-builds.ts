@@ -26,6 +26,14 @@ export async function wasInherited(
 	return markers[routineId] === buildId
 }
 
+export async function getInheritedBuildId(
+	routineId: Routine['id']
+): Promise<Build['id'] | null> {
+	const markers = await read()
+
+	return markers[routineId] ?? null
+}
+
 export async function markInherited(
 	routineId: Routine['id'],
 	buildId: Build['id']

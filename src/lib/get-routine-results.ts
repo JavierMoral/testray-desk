@@ -9,7 +9,17 @@ import { Build, Case, CaseResult, Routine } from '@/types/testray'
 
 import { getTestResult } from './get-test-result'
 import { inheritMetadata } from './inherit-metadata'
-import { markInherited, wasInherited } from './inherited-builds'
+import {
+	getInheritedBuildId,
+	markInherited,
+	wasInherited,
+} from './inherited-builds'
+import {
+	computeSkippedBuildIds,
+	logEvent,
+	snapshot,
+	startRun,
+} from './page-management-audit'
 import { hasHistory } from './test-history'
 import { getTypeWeight } from './test-type'
 
@@ -17,10 +27,37 @@ export async function getRoutineResults(routineId: Routine['id']): Promise<{
 	results: TestResult[]
 	build: { id: Build['id']; date: string; gitHash: string }
 }> {
+	const audit = startRun(routineId, 'web')
+
 	const [lastBuild, previousDayBuild] = await getRoutineBuilds({
 		routineId,
 		limit: 2,
 	})
+
+	if (audit) {
+		audit.lastBuildId = lastBuild?.id
+		audit.previousBuildId = previousDayBuild?.id
+
+		const recentBuildIds = (
+			await getRoutineBuilds({ routineId, limit: 10 })
+		).map((build) => build.id)
+
+		const markerBuildId = await getInheritedBuildId(routineId)
+
+		await logEvent(audit, 'build.select', {
+			lastBuildId: lastBuild?.id ?? null,
+			lastBuildDate: lastBuild?.dateCreated ?? null,
+			previousBuildId: previousDayBuild?.id ?? null,
+			previousBuildDate: previousDayBuild?.dateCreated ?? null,
+			previousBuildMissing: !previousDayBuild,
+			recentBuildIds,
+			inheritedMarkerBuildId: markerBuildId,
+			skippedBuildIds: computeSkippedBuildIds(
+				recentBuildIds,
+				markerBuildId
+			),
+		})
+	}
 
 	const previousDayIssues = await getBuildCaseResults({
 		buildId: previousDayBuild.id,
@@ -31,6 +68,9 @@ export async function getRoutineResults(routineId: Routine['id']): Promise<{
 		buildId: lastBuild.id,
 		statuses: ['FAILED', 'BLOCKED', 'UNTESTED'],
 	})
+
+	await snapshot(audit, previousDayBuild.id, previousDayIssues)
+	await snapshot(audit, lastBuild.id, caseResults)
 
 	const caseIds = caseResults.map(
 		(caseResult) => caseResult.r_caseToCaseResult_c_caseId
@@ -60,6 +100,13 @@ export async function getRoutineResults(routineId: Routine['id']): Promise<{
 
 	const inherited = await wasInherited(routineId, lastBuild.id)
 
+	if (inherited) {
+		await logEvent(audit, 'inherit.skip', {
+			reason: 'already-inherited',
+			lastBuildId: lastBuild.id,
+		})
+	}
+
 	const results = []
 
 	for (let caseResult of caseResults) {
@@ -79,7 +126,11 @@ export async function getRoutineResults(routineId: Routine['id']): Promise<{
 		}
 
 		if (!inherited) {
-			caseResult = await inheritMetadata(previousDayIssues, caseResult)
+			caseResult = await inheritMetadata(
+				previousDayIssues,
+				caseResult,
+				audit
+			)
 		}
 
 		const history = histories.get(testCase.id) ?? null
