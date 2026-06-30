@@ -8,7 +8,9 @@
 		"start": "next start",
 		"format": "prettier --write .",
 		"job:daily-summary": "tsx --env-file=.env.local src/scripts/daily-summary.ts",
-		"job:update-case-results": "tsx --env-file=.env.local src/scripts/update-case-results.ts"
+		"job:update-case-results": "tsx --env-file=.env.local src/scripts/update-case-results.ts",
+		"job:verify-metadata": "tsx --env-file=.env.local src/scripts/verify-metadata.ts",
+		"job:daily-check": "npm run job:update-case-results && npm run job:verify-metadata"
 	},
 	"dependencies": {
 		"@iconify/react": "^6.0.2",

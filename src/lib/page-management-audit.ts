@@ -31,7 +31,7 @@ const LOG_FILE = path.join(DIR, 'page-management-audit.jsonl')
 const SNAPSHOT_DIR = path.join(DIR, 'page-management-snapshots')
 const SNAPSHOT_KEEP = 40
 
-export type AuditSource = 'web' | 'cron' | 'manual'
+export type AuditSource = 'web' | 'cron' | 'manual' | 'verify'
 
 export type AuditContext = {
 	runId: string
